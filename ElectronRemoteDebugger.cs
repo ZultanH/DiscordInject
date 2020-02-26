@@ -124,7 +124,6 @@ namespace DiscordConnect
 
             var serializedData = JsonConvert.SerializeObject(dataDict);
             var receivedData = await sendrcv(webSocketUri, serializedData);
-            Console.Write("BREAKPOINT 4\n");
 
             if (receivedData == null)
                 return null;
