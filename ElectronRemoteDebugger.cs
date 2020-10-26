@@ -70,20 +70,20 @@ namespace DiscordInjector
             }
         }
 
-            async Task Send(WebSocket webSocket, string expression)
-            {
-                var array = Encoding.UTF8.GetBytes(expression);
-                var buffer = new ArraySegment<byte>(array);
-                await webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-            }
+        async Task Send(WebSocket webSocket, string expression)
+        {
+            var array = Encoding.UTF8.GetBytes(expression);
+            var buffer = new ArraySegment<byte>(array);
+            await webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+        }
 
 
-            async Task<string> sendrcv(Uri webSocketUri, string expression)
+        async Task<string> sendrcv(Uri webSocketUri, string expression)
+        {
+            var factory = new WebSocketClientFactory();
+            using (WebSocket webSocket = await factory.ConnectAsync(webSocketUri))
             {
-                var factory = new WebSocketClientFactory();
-                using (WebSocket webSocket = await factory.ConnectAsync(webSocketUri))
-                {
-                    try
+               try
                     {
                         // receive loop
                         var readTask = Receive(webSocket);
@@ -105,62 +105,62 @@ namespace DiscordInjector
                 }
             }
 
-            public async Task<JObject> eval(Uri webSocketUri, string expression)
+        public async Task<JObject> eval(Uri webSocketUri, string expression)
+        {
+            var dataDict = new Dictionary<string, dynamic>
             {
-                var dataDict = new Dictionary<string, dynamic>
-                {
-                    { "id", 1 },
-                    { "method", "Runtime.evaluate" },
-                    { "params", new Dictionary<string, dynamic>
-                        {
-                            { "contextId",  1 },
-                            { "doNotPauseOnExceptionsAndMuteConsole", false },
-                            { "expression", expression },
-                            { "gneratePreview", false },
-                            { "includeCommandLineAPI", true },
-                            { "objectGroup", "console" },
-                            { "returnByValue", false },
-                            { "userGesture", true }
-                        }
-                    }
-                };
-
-                var serializedData = JsonConvert.SerializeObject(dataDict);
-                var receivedData = await sendrcv(webSocketUri, serializedData);
-
-                if (receivedData == null)
-                    return null;
-
-                JObject deserializedObject = JObject.Parse(receivedData);
-                if (!deserializedObject.ContainsKey("result"))
-                    return deserializedObject;
-                else if (deserializedObject["result"].ToObject<JObject>().ContainsKey("wasThrown"))
-                    throw new Exception(deserializedObject["result"]["result"].ToString());
-                else
-                    return deserializedObject["result"].ToObject<JObject>();
-            }
-
-            JArray requests_get(string url, int tries = 5, int delay = 1)
-            {
-                Exception last_exception = null;
-                var objectList = new List<JObject>();
-
-                for (int i = 1; i < tries; i++)
-                {
-                    try
+                { "id", 1 },
+                { "method", "Runtime.evaluate" },
+                { "params", new Dictionary<string, dynamic>
                     {
-                        var client = new WebClient();
-                        string response = client.DownloadString(url);
-                        var jsonResp = JArray.Parse(response);
-                        return jsonResp;
+                        { "contextId",  1 },
+                        { "doNotPauseOnExceptionsAndMuteConsole", false },
+                        { "expression", expression },
+                        { "gneratePreview", false },
+                        { "includeCommandLineAPI", true },
+                        { "objectGroup", "console" },
+                        { "returnByValue", false },
+                        { "userGesture", true }
                     }
-                    catch (Exception ex)
-                    {
-                        last_exception = ex;
-                    }
-                    Thread.Sleep(delay * 1000);
                 }
-                throw last_exception;
+            };
+
+            var serializedData = JsonConvert.SerializeObject(dataDict);
+            var receivedData = await sendrcv(webSocketUri, serializedData);
+
+            if (receivedData == null)
+                return null;
+
+            JObject deserializedObject = JObject.Parse(receivedData);
+            if (!deserializedObject.ContainsKey("result"))
+                return deserializedObject;
+            else if (deserializedObject["result"].ToObject<JObject>().ContainsKey("wasThrown"))
+                throw new Exception(deserializedObject["result"]["result"].ToString());
+            else
+                return deserializedObject["result"].ToObject<JObject>();
+        }
+
+        JArray requests_get(string url, int tries = 5, int delay = 1)
+        {
+            Exception last_exception = null;
+            var objectList = new List<JObject>();
+
+            for (int i = 1; i < tries; i++)
+            {
+                try
+                {
+                    var client = new WebClient();
+                    string response = client.DownloadString(url);
+                    var jsonResp = JArray.Parse(response);
+                    return jsonResp;
+                }
+                catch (Exception ex)
+                {
+                    last_exception = ex;
+                }
+                Thread.Sleep(delay * 1000);
             }
+            throw last_exception;
         }
     }
+}
