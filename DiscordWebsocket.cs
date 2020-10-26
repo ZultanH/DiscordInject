@@ -1,9 +1,8 @@
-﻿using System;
-using System.Threading;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace DiscordConnect
+namespace DiscordInjector
 {
     class DiscordWebsocket
     {
@@ -13,7 +12,7 @@ namespace DiscordConnect
             var windowList = erd.windows();
             foreach (var window in windowList)
             {
-                Uri windowUri   = window.Item1;
+                Uri windowUri = window.Item1;
                 string windowId = window.Item2;
 
                 if (visitedWindows.Contains(windowId))
@@ -26,11 +25,10 @@ namespace DiscordConnect
                         await erd.eval(windowUri, payload);
                         Console.Write("Successfully Injected...\n");
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        Console.Write($"Could not Connect URL: [{windowUri.ToString()}]... Retrying\n");
-                        Thread.Sleep(1000);
-                        continue;
+                        Console.WriteLine($"Could not Connect URL: [{windowUri.ToString()}]...\n");
+                        break;
                     }
                 }
                 visitedWindows.Add(windowId);
